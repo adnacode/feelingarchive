@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Feeling Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Quicksand:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080612;
+  --surface: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #f0eaff;
+  --text-dim: rgba(240,234,255,0.45);
+  --text-muted: rgba(240,234,255,0.25);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 300;
+  user-select: none;
+}
+
+/* ── BOKEH BACKGROUND ── */
+.bokeh-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.bokeh-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: float linear infinite;
+  opacity: 0;
+}
+
+@keyframes float {
+  0%   { transform: translate(0,0) scale(1);   opacity: 0; }
+  10%  { opacity: var(--op); }
+  50%  { transform: translate(var(--dx), var(--dy)) scale(var(--sc)); }
+  90%  { opacity: var(--op); }
+  100% { transform: translate(var(--dx2), var(--dy2)) scale(1); opacity: 0; }
+}
+
+/* ── APP SHELL ── */
+.app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── SCREENS ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(12px);
+  overflow: hidden;
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ── STATUS BAR ── */
+.statusbar {
+  padding: 14px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.statusbar-time {
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--text);
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  padding: 10px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 200;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.app-title span {
+  font-style: italic;
+  color: rgba(220,180,255,0.9);
+}
+
+.topbar-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+/* ── HOME SCREEN ── */
+#screen-home {
+  background: transparent;
+}
+
+.home-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 20px 250px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-scroll::-webkit-scrollbar { display: none; }
+
+/* Recent feelings label */
+.section-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 4px 10px;
+}
+
+/* ── FEELING ORBS GRID ── */
+.orb-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.feeling-orb {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.25s ease;
+  animation: orbIn 0.75s ease both;
+}
+
+.feeling-orb:nth-child(1)  { animation: orbIn 0.75s ease both, orbFloat1 6s ease-in-out 0.75s infinite; }
+.feeling-orb:nth-child(2)  { animation: orbIn 0.75s ease 0.06s both, orbFloat2 7s ease-in-out 0.81s infinite; }
+.feeling-orb:nth-child(3)  { animation: orbIn 0.75s ease 0.12s both, orbFloat3 5.5s ease-in-out 0.87s infinite; }
+.feeling-orb:nth-child(4)  { animation: orbIn 0.75s ease 0.18s both, orbFloat1 8s ease-in-out 0.93s infinite; }
+.feeling-orb:nth-child(5)  { animation: orbIn 0.75s ease 0.24s both, orbFloat2 6.5s ease-in-out 0.99s infinite; }
+.feeling-orb:nth-child(6)  { animation: orbIn 0.75s ease 0.30s both, orbFloat3 7.5s ease-in-out 1.05s infinite; }
+.feeling-orb:nth-child(7)  { animation: orbIn 0.75s ease 0.36s both, orbFloat1 5s ease-in-out 1.11s infinite; }
+.feeling-orb:nth-child(8)  { animation: orbIn 0.75s ease 0.42s both, orbFloat2 8.5s ease-in-out 1.17s infinite; }
+
+@keyframes orbIn {
+  from { opacity:0; transform:scale(0.7); }
+  to   { opacity:1; transform:scale(1); }
+}
+
+@keyframes orbFloat1 {
+  0%,100% { transform: translateY(0px) scale(1); }
+  50%     { transform: translateY(-6px) scale(1.02); }
+}
+@keyframes orbFloat2 {
+  0%,100% { transform: translateY(0px) scale(1); }
+  50%     { transform: translateY(-9px) scale(1.03); }
+}
+@keyframes orbFloat3 {
+  0%,100% { transform: translateY(-3px) scale(1.01); }
+  50%     { transform: translateY(4px) scale(0.99); }
+}
+
+.feeling-orb:active { transform: scale(0.9) !important; }
+
+.orb-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 30px var(--orb-color), 0 0 60px var(--orb-glow), inset 0 0 20px rgba(255,255,255,0.08);
+  animation: orbGlow 4s ease-in-out infinite;
+}
+
+@keyframes orbGlow {
+  0%,100% { box-shadow: 0 0 24px var(--orb-color), 0 0 48px var(--orb-glow), inset 0 0 16px rgba(255,255,255,0.07); }
+  50%     { box-shadow: 0 0 36px var(--orb-color), 0 0 70px var(--orb-glow), inset 0 0 26px rgba(255,255,255,0.12); }
+}
+
+.orb-emoji {
+  font-size: 22px;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+  z-index: 1;
+}
+
+.orb-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  padding: 0 6px;
+  line-height: 1.3;
+  z-index: 1;
+  text-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+.orb-date {
+  font-size: 8.5px;
+  color: rgba(255,255,255,0.55);
+  z-index: 1;
+}
+
+/* ── HERO CAPTURE AREA ── */
+.hero-capture {
+  padding: 40px 4px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.capture-ring {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.capture-ring::before,
+.capture-ring::after {
+  content:'';
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(200,160,255,0.25);
+  animation: ringPulse 3s ease-in-out infinite;
+}
+
+.capture-ring::before { inset: -10px; animation-delay: 0s; }
+.capture-ring::after  { inset: -22px; animation-delay: 0.8s; }
+
+@keyframes ringPulse {
+  0%,100% { opacity:0.3; transform:scale(1); }
+  50%      { opacity:0.7; transform:scale(1.04); }
+}
+
+.capture-btn-circle {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 32%, rgba(180,130,255,0.5), rgba(100,80,200,0.3) 50%, rgba(60,40,140,0.4));
+  border: 1.5px solid rgba(200,160,255,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 0 40px rgba(150,100,255,0.3), 0 0 80px rgba(100,60,200,0.15), inset 0 0 30px rgba(255,255,255,0.05);
+  transition: all 0.25s;
+  cursor: pointer;
+  font-size: 30px;
+}
+
+.capture-btn-circle:active {
+  transform: scale(0.93);
+  box-shadow: 0 0 60px rgba(150,100,255,0.5), 0 0 100px rgba(100,60,200,0.25);
+}
+
+.capture-btn-circle.pulse {
+  animation: capturePop 0.5s ease forwards;
+}
+
+@keyframes capturePop {
+  0%  { transform:scale(1); }
+  40% { transform:scale(1.12); box-shadow: 0 0 80px rgba(200,160,255,0.6), 0 0 140px rgba(150,100,255,0.3); }
+  100%{ transform:scale(1); }
+}
+
+.capture-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+/* ── STATS ROW ── */
+.stats-row {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0 16px;
+}
+
+.stat-pill {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 10px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.stat-num {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 200;
+  font-size: 24px;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.stat-lbl {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  padding: 10px 20px 28px;
+  background: linear-gradient(to top, rgba(8,6,18,0.98) 60%, transparent);
+  display: flex;
+  justify-content: space-around;
+  z-index: 50;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 16px;
+  border-radius: 16px;
+  transition: all 0.2s;
+}
+
+.nav-item.active .nav-icon { filter: drop-shadow(0 0 8px currentColor); }
+.nav-item.active .nav-lbl { color: rgba(200,160,255,0.9); }
+
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-lbl  { font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; }
+
+/* ── DETAIL SCREEN ── */
+#screen-detail {
+  background: transparent;
+}
+
+.detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 40px;
+}
+.detail-scroll::-webkit-scrollbar { display:none; }
+
+.detail-back {
+  padding: 12px 24px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── DETAIL BLOOM ── */
+.detail-bloom-area {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 20px;
+  position: relative;
+}
+
+.detail-bloom-wrap {
+  width: 200px; height: 200px;
+  position: relative;
+}
+
+.bloom-glow-bg {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: 0.35;
+}
+
+.detail-bloom-wrap svg {
+  width: 100%; height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.detail-info {
+  padding: 0 28px 20px;
+  text-align: center;
+}
+
+.detail-title-text {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 200;
+  font-size: 26px;
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.detail-date-text {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.detail-note-text {
+  font-style: italic;
+  color: var(--text-dim);
+  line-height: 1.8;
+  font-size: 14px;
+  padding: 0 8px;
+}
+
+/* ── SENSOR BARS ── */
+.sensor-section {
+  padding: 16px 28px;
+}
+
+.sensor-section-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.sbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sbar-name {
+  font-size: 11px;
+  color: var(--text-dim);
+  min-width: 74px;
+}
+
+.sbar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sbar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease 0.2s;
+  box-shadow: 0 0 8px var(--bar-color);
+}
+
+.sbar-num {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── TAGS ── */
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 28px 20px;
+  justify-content: center;
+}
+
+.tag-chip {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-dim);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(4px);
+}
+
+/* ── RECONSTRUCT BTN ── */
+.reconstruct-wrap {
+  padding: 8px 28px 16px;
+}
+
+.reconstruct-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(200,160,255,0.35);
+  background: radial-gradient(ellipse at 50% 0%, rgba(160,100,255,0.18), rgba(80,40,160,0.12));
+  color: rgba(220,190,255,0.9);
+  font-family: 'Quicksand', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(140,80,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.reconstruct-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 40px rgba(140,80,255,0.3);
+}
+
+.reconstruct-btn.glowing {
+  border-color: rgba(200,160,255,0.7);
+  background: radial-gradient(ellipse at 50% 0%, rgba(160,100,255,0.3), rgba(80,40,160,0.2));
+  box-shadow: 0 0 40px rgba(160,100,255,0.35), 0 0 80px rgba(100,60,200,0.2);
+  color: rgba(240,220,255,1);
+}
+
+/* ── CAPTURE SCREEN ── */
+#screen-capture {
+  overflow: hidden;
+}
+
+.capture-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 28px 100px;
+  text-align: center;
+}
+.capture-scroll::-webkit-scrollbar { display: none; }
+
+.capture-title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 200;
+  font-size: 28px;
+  font-style: italic;
+  color: var(--text);
+}
+
+.capture-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+  max-width: 280px;
+  margin-top: -6px;
+}
+
+.capture-big-btn {
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 38% 30%, rgba(180,130,255,0.55), rgba(100,60,220,0.35) 55%, rgba(60,30,130,0.4));
+  border: 1.5px solid rgba(200,160,255,0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  box-shadow: 0 0 60px rgba(150,90,255,0.35), 0 0 120px rgba(100,60,200,0.2), inset 0 0 40px rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: all 0.25s;
+  flex-shrink: 0;
+  animation: captureOrb 4s ease-in-out infinite;
+}
+
+@keyframes captureOrb {
+  0%,100% { box-shadow: 0 0 60px rgba(150,90,255,0.35), 0 0 120px rgba(100,60,200,0.2), inset 0 0 40px rgba(255,255,255,0.05); }
+  50% { box-shadow: 0 0 80px rgba(180,120,255,0.55), 0 0 150px rgba(130,80,220,0.3), inset 0 0 50px rgba(255,255,255,0.08); }
+}
+
+.capture-big-btn:active {
+  transform: scale(0.9);
+}
+
+.capture-sensors {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.capture-sensor-dot {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.cs-icon { font-size: 18px; }
+.cs-name { font-size: 9px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.cs-val  { font-size: 13px; color: var(--text-dim); font-family: 'Nunito', sans-serif; font-weight: 200; }
+
+.cs-recording .cs-val { color: rgba(180,240,180,0.9); animation: blink 1s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── INSIGHTS SCREEN ── */
+#screen-insights {
+  overflow: hidden;
+}
+
+.insights-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px 100px;
+  -webkit-overflow-scrolling: touch;
+}
+.insights-scroll::-webkit-scrollbar { display:none; }
+
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.insight-card::before {
+  content:'';
+  position: absolute;
+  inset: 0;
+  background: var(--card-tint);
+  pointer-events: none;
+}
+
+.ic-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.ic-body {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 200;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.ic-body em {
+  font-style: normal;
+  color: var(--ic-accent, rgba(200,160,255,0.9));
+}
+
+.ic-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.feelings-mini-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.feelings-mini-row::-webkit-scrollbar { display:none; }
+
+/* ── EMOTION CHART ── */
+.emotion-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px 18px 14px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.emotion-chart-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(160,100,255,0.06), transparent 70%);
+  pointer-events: none;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.chart-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.legend-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 110px;
+}
+
+.chart-wrap svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-x-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 2px 0;
+}
+
+.chart-x-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.chart-tooltip {
+  position: absolute;
+  background: rgba(14,12,22,0.95);
+  border: 1px solid rgba(200,160,255,0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 10px;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  z-index: 10;
+}
+.chart-tooltip.show { opacity: 1; }
+
+.mini-orb {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 16px var(--morb-color), inset 0 0 12px rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.mini-orb:active { transform: scale(0.9); }
+</style>
+</head>
+<body>
+
+<!-- BOKEH BACKGROUND -->
+<div class="bokeh-bg" id="bokehBg"></div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- ── HOME ── -->
+  <div class="screen active" id="screen-home">
+    <div class="statusbar">
+      <span class="statusbar-time" id="clock">9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="topbar">
+      <div class="app-title">the <span>feeling</span> archive</div>
+      <div class="topbar-icon">☰</div>
+    </div>
+
+    <div class="home-scroll">
+      <!-- capture hero -->
+      <div class="hero-capture">
+        <div class="capture-ring">
+          <div class="capture-btn-circle" id="homeCapture">◎</div>
+        </div>
+        <div class="capture-sub">hold to capture a feeling</div>
+      </div>
+
+      <!-- stats -->
+      <div class="stats-row">
+        <div class="stat-pill">
+          <div class="stat-num">47</div>
+          <div class="stat-lbl">Feelings</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-num">8</div>
+          <div class="stat-lbl">This month</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-num">3</div>
+          <div class="stat-lbl">Revisited</div>
+        </div>
+      </div>
+
+      <div class="section-label">Your Archive</div>
+      <div class="orb-grid" id="orbGrid"></div>
+    </div>
+  </div>
+
+  <!-- ── DETAIL ── -->
+  <div class="screen" id="screen-detail">
+    <div class="statusbar">
+      <span class="statusbar-time" id="clock2">9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="detail-back" id="detailBack">← back</div>
+
+    <div class="detail-scroll">
+      <div class="detail-bloom-area">
+        <div class="detail-bloom-wrap">
+          <div class="bloom-glow-bg" id="bloomGlowBg"></div>
+          <svg id="detailSvg" viewBox="0 0 200 200"></svg>
+        </div>
+      </div>
+
+      <div class="detail-info">
+        <div class="detail-title-text" id="dTitle"></div>
+        <div class="detail-date-text" id="dDate"></div>
+        <div class="detail-note-text" id="dNote"></div>
+      </div>
+
+      <div class="tags-row" id="dTags"></div>
+
+      <div class="sensor-section">
+        <div class="sensor-section-label">Sensory Signature</div>
+        <div id="dBars"></div>
+      </div>
+
+      <div class="reconstruct-wrap">
+        <button class="reconstruct-btn" id="reconstructBtn">
+          <span>◎</span> Reconstruct this Feeling
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CAPTURE ── -->
+  <div class="screen" id="screen-capture">
+    <div class="statusbar">
+      <span class="statusbar-time">9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="capture-scroll">
+      <div class="capture-title">Capture a feeling</div>
+      <div class="capture-desc">Press and hold when a moment feels worth keeping. Your sensors will do the rest.</div>
+
+      <div class="capture-big-btn" id="captureBigBtn">◎</div>
+
+      <div class="capture-sensors" id="captureSensors">
+        <div class="capture-sensor-dot" id="cs-sound">
+          <div class="cs-icon">🔊</div>
+          <div class="cs-name">Sound</div>
+          <div class="cs-val">—</div>
+        </div>
+        <div class="capture-sensor-dot" id="cs-light">
+          <div class="cs-icon">☀️</div>
+          <div class="cs-name">Light</div>
+          <div class="cs-val">—</div>
+        </div>
+        <div class="capture-sensor-dot" id="cs-motion">
+          <div class="cs-icon">🫀</div>
+          <div class="cs-name">Heart</div>
+          <div class="cs-val">—</div>
+        </div>
+        <div class="capture-sensor-dot" id="cs-temp">
+          <div class="cs-icon">🌡️</div>
+          <div class="cs-name">Temp</div>
+          <div class="cs-val">—</div>
+        </div>
+        <div class="capture-sensor-dot" id="cs-scent">
+          <div class="cs-icon">🌿</div>
+          <div class="cs-name">Scent</div>
+          <div class="cs-val">—</div>
+        </div>
+        <div class="capture-sensor-dot" id="cs-loc">
+          <div class="cs-icon">📍</div>
+          <div class="cs-name">Place</div>
+          <div class="cs-val">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INSIGHTS ── -->
+  <div class="screen" id="screen-insights">
+    <div class="statusbar">
+      <span class="statusbar-time">9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="topbar">
+      <div class="app-title">your <span>patterns</span></div>
+    </div>
+    <div class="insights-scroll">
+
+      <!-- EMOTION LINE GRAPH -->
+      <div class="emotion-chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Emotional Intensity · Last 30 days</div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Calm</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>Joy</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Nostalgia</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="chart-tooltip" id="chartTooltip"></div>
+          <svg id="emotionChart" viewBox="0 0 340 110" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="chart-x-labels" id="chartXLabels"></div>
+      </div>
+
+      <div class="insight-card" style="--card-tint: radial-gradient(ellipse at 0% 0%, rgba(200,130,255,0.06), transparent 60%); --ic-accent: rgba(200,150,255,0.9);">
+        <div class="ic-label">Most Common State</div>
+        <div class="ic-body">You feel most like yourself in <em>warm, quiet mornings</em> — before your phone, after coffee.</div>
+        <div class="ic-sub">14 captured feelings share this sensory signature. Usually 7–9am.</div>
+        <div class="feelings-mini-row" id="insightMinis"></div>
+      </div>
+
+      <div class="insight-card" style="--card-tint: radial-gradient(ellipse at 100% 0%, rgba(80,180,255,0.05), transparent 60%); --ic-accent: rgba(140,200,255,0.9);">
+        <div class="ic-label">A Feeling You Haven't Visited</div>
+        <div class="ic-body"><em>Summer, 2019.</em> The apartment on Lyndale. 8 months since you've returned here.</div>
+        <div class="ic-sub">Your HRV during that period was the highest on record. Something was deeply right.</div>
+      </div>
+
+      <div class="insight-card" style="--card-tint: radial-gradient(ellipse at 50% 100%, rgba(255,140,80,0.05), transparent 60%); --ic-accent: rgba(255,180,120,0.9);">
+        <div class="ic-label">Sensory Pattern</div>
+        <div class="ic-body">Low sound + warm light = your <em>deepest calm.</em> High movement + cool air = your most creative.</div>
+        <div class="ic-sub">Based on 47 feelings and their associated emotional states over 14 months.</div>
+      </div>
+
+      <div class="insight-card" style="--card-tint: radial-gradient(ellipse at 0% 100%, rgba(100,255,180,0.04), transparent 60%); --ic-accent: rgba(140,255,180,0.9);">
+        <div class="ic-label">Time of Year</div>
+        <div class="ic-body">You captured <em>3× more feelings</em> in autumn than any other season.</div>
+        <div class="ic-sub">October has the highest average feeling intensity score of any month.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-screen="home">
+      <div class="nav-icon">◎</div>
+      <div class="nav-lbl">Archive</div>
+    </div>
+    <div class="nav-item" data-screen="capture">
+      <div class="nav-icon">⊕</div>
+      <div class="nav-lbl">Capture</div>
+    </div>
+    <div class="nav-item" data-screen="insights">
+      <div class="nav-icon">✦</div>
+      <div class="nav-lbl">Patterns</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+const feelings = [
+  {
+    title: "Grandmother's kitchen, Sunday",
+    date: "March 2019",
+    emoji: "🕯️",
+    note: "The specific quality of being somewhere that smells like safety. You didn't know how rare this was.",
+    tags: ["warmth","belonging","Sunday"],
+    color: "#d4854a",
+    glow: "rgba(212,133,74,0.6)",
+    sensors: [
+      { name:"Sound",    val:28,  pct:28,  color:"#e8c080", unit:"%",   desc:"Low hum" },
+      { name:"Light",    val:72,  pct:72,  color:"#f0c060", unit:"%",   desc:"Warm amber" },
+      { name:"Heart",    val:58,  pct:40,  color:"#e07070", unit:"bpm", desc:"Deeply calm" },
+      { name:"Temp",     val:76,  pct:65,  color:"#e0a060", unit:"°F",  desc:"Humid warmth" },
+      { name:"Movement", val:15,  pct:15,  color:"#a0c080", unit:"%",   desc:"Nearly still" },
+    ],
+    petalColors: ["#d4854a","#e8b070","#c06030","#f0c870","#b85030"],
+    petalSizes:  [0.58,0.44,0.66,0.38,0.60,0.50,0.42],
+  },
+  {
+    title: "The apartment on Lyndale",
+    date: "Summer 2019",
+    emoji: "🌅",
+    note: "Broke and free. The window faced west. You didn't know you were happy.",
+    tags: ["freedom","evening","alone"],
+    color: "#c94a7a",
+    glow: "rgba(201,74,122,0.6)",
+    sensors: [
+      { name:"Sound",    val:45,  pct:45,  color:"#e090c0", unit:"%",   desc:"Street noise" },
+      { name:"Light",    val:88,  pct:88,  color:"#f0d040", unit:"%",   desc:"Golden hour" },
+      { name:"Heart",    val:64,  pct:52,  color:"#e07070", unit:"bpm", desc:"Alive" },
+      { name:"Temp",     val:74,  pct:60,  color:"#e0a060", unit:"°F",  desc:"Window open" },
+      { name:"Movement", val:35,  pct:35,  color:"#a0c080", unit:"%",   desc:"Restless" },
+    ],
+    petalColors: ["#c94a7a","#e87090","#a82a5a","#f090a0","#d060a0"],
+    petalSizes:  [0.70,0.52,0.80,0.60,0.74,0.58,0.64],
+  },
+  {
+    title: "First morning, new city",
+    date: "Sept 2021",
+    emoji: "✨",
+    note: "Everything unfamiliar. Your nervous system wide open. The sharpness of not knowing what comes next.",
+    tags: ["newness","electric","alone"],
+    color: "#4a8ed4",
+    glow: "rgba(74,142,212,0.6)",
+    sensors: [
+      { name:"Sound",    val:62,  pct:62,  color:"#80b0f0", unit:"%",   desc:"City sounds" },
+      { name:"Light",    val:55,  pct:55,  color:"#c0d0f0", unit:"%",   desc:"Cool overcast" },
+      { name:"Heart",    val:82,  pct:75,  color:"#e07070", unit:"bpm", desc:"Electric" },
+      { name:"Temp",     val:60,  pct:40,  color:"#80c0e0", unit:"°F",  desc:"Crisp air" },
+      { name:"Movement", val:78,  pct:78,  color:"#a0c080", unit:"%",   desc:"Walking fast" },
+    ],
+    petalColors: ["#4a8ed4","#70b0e8","#3068b0","#90c0f0","#5a9edc"],
+    petalSizes:  [0.50,0.72,0.44,0.68,0.56,0.80,0.48],
+  },
+  {
+    title: "Late night, finals week",
+    date: "Dec 2020",
+    emoji: "🌿",
+    note: "Completely alone and completely focused. The world reduced to one lamp and one problem.",
+    tags: ["focus","solitude","night"],
+    color: "#5a9a6a",
+    glow: "rgba(90,154,106,0.6)",
+    sensors: [
+      { name:"Sound",    val:8,   pct:8,   color:"#90c090", unit:"%",   desc:"Near silence" },
+      { name:"Light",    val:22,  pct:22,  color:"#c0d890", unit:"%",   desc:"Single lamp" },
+      { name:"Heart",    val:70,  pct:58,  color:"#e07070", unit:"bpm", desc:"Locked in" },
+      { name:"Temp",     val:68,  pct:52,  color:"#a0c060", unit:"°F",  desc:"Dry heat" },
+      { name:"Movement", val:10,  pct:10,  color:"#a0c080", unit:"%",   desc:"Still" },
+    ],
+    petalColors: ["#5a9a6a","#7ab88a","#3a7a4a","#9ac8a0","#4a8860"],
+    petalSizes:  [0.35,0.48,0.30,0.52,0.38,0.44,0.40],
+  },
+  {
+    title: "Just before she said yes",
+    date: "Oct 2023",
+    emoji: "🌸",
+    note: "The last second of not knowing. Your whole nervous system suspended between two versions of your life.",
+    tags: ["anticipation","love","threshold"],
+    color: "#d060c0",
+    glow: "rgba(208,96,192,0.6)",
+    sensors: [
+      { name:"Sound",    val:30,  pct:30,  color:"#e090d0", unit:"%",   desc:"Quiet restaurant" },
+      { name:"Light",    val:60,  pct:60,  color:"#f0d090", unit:"%",   desc:"Candlelight" },
+      { name:"Heart",    val:110, pct:90,  color:"#e07070", unit:"bpm", desc:"Suspended" },
+      { name:"Temp",     val:65,  pct:44,  color:"#e0a0c0", unit:"°F",  desc:"October evening" },
+      { name:"Movement", val:5,   pct:5,   color:"#c090d0", unit:"%",   desc:"Completely still" },
+    ],
+    petalColors: ["#d060c0","#e890d8","#b040a0","#f0a0e0","#c050b8"],
+    petalSizes:  [0.88,0.70,0.92,0.66,0.84,0.76,0.90,0.68,0.82],
+  },
+  {
+    title: "Sunday morning, no plans",
+    date: "Feb 2024",
+    emoji: "🌧️",
+    note: "The luxury of time with no shape. Rain on windows. Nothing required of you.",
+    tags: ["stillness","rain","present"],
+    color: "#6090d0",
+    glow: "rgba(96,144,208,0.6)",
+    sensors: [
+      { name:"Sound",    val:20,  pct:20,  color:"#90b8f0", unit:"%",   desc:"Rain, steady" },
+      { name:"Light",    val:35,  pct:35,  color:"#b0c8f0", unit:"%",   desc:"Grey diffuse" },
+      { name:"Heart",    val:55,  pct:33,  color:"#e07070", unit:"bpm", desc:"At rest" },
+      { name:"Temp",     val:70,  pct:57,  color:"#a0b8e0", unit:"°F",  desc:"Warm blanket" },
+      { name:"Movement", val:8,   pct:8,   color:"#a0c0e0", unit:"%",   desc:"Unhurried" },
+    ],
+    petalColors: ["#6090d0","#80b0e8","#4070b0","#a0c8f0","#5080c0"],
+    petalSizes:  [0.40,0.55,0.35,0.50,0.42,0.48,0.44],
+  },
+  {
+    title: "Last day of a long trip",
+    date: "July 2022",
+    emoji: "🌊",
+    note: "Full and already grieving. Not wanting to go back to being the person who hadn't been here.",
+    tags: ["bittersweetness","fullness","travel"],
+    color: "#8060d0",
+    glow: "rgba(128,96,208,0.6)",
+    sensors: [
+      { name:"Sound",    val:55,  pct:55,  color:"#b090e0", unit:"%",   desc:"Café, foreign voices" },
+      { name:"Light",    val:78,  pct:78,  color:"#f0d060", unit:"%",   desc:"Mediterranean noon" },
+      { name:"Heart",    val:72,  pct:60,  color:"#e07070", unit:"bpm", desc:"Full" },
+      { name:"Temp",     val:78,  pct:68,  color:"#e0c080", unit:"°F",  desc:"Sea air" },
+      { name:"Movement", val:42,  pct:42,  color:"#b090d0", unit:"%",   desc:"Slow, deliberate" },
+    ],
+    petalColors: ["#8060d0","#c080e8","#4a8ed4","#d090f0","#6070c0","#e0b070","#9070e0"],
+    petalSizes:  [0.62,0.78,0.54,0.70,0.60,0.50,0.74,0.58,0.66],
+  },
+  {
+    title: "Driving home through fog",
+    date: "Nov 2023",
+    emoji: "🌫️",
+    note: "The world reduced to twenty feet ahead. Strange peace in having no choice but the present moment.",
+    tags: ["solitude","present","night"],
+    color: "#8090a8",
+    glow: "rgba(128,144,168,0.5)",
+    sensors: [
+      { name:"Sound",    val:15,  pct:15,  color:"#a0b0c8", unit:"%",   desc:"Engine hum" },
+      { name:"Light",    val:18,  pct:18,  color:"#c0c8a8", unit:"%",   desc:"Fog, headlights" },
+      { name:"Heart",    val:62,  pct:50,  color:"#e07070", unit:"bpm", desc:"Alert, calm" },
+      { name:"Temp",     val:54,  pct:28,  color:"#90a8c0", unit:"°F",  desc:"Dense fog" },
+      { name:"Movement", val:55,  pct:55,  color:"#b0c090", unit:"%",   desc:"Steady driving" },
+    ],
+    petalColors: ["#8090a8","#a0b0c0","#607080","#c0c8d0","#7080a0"],
+    petalSizes:  [0.44,0.58,0.38,0.52,0.46,0.60,0.40],
+  },
+];
+
+// ── BOKEH ──────────────────────────────────────────────────────────────────
+const orbColors = [
+  '#c84aff','#4a8cff','#ff4ac8','#4affc8','#ffc84a',
+  '#ff6a4a','#4afff0','#a04aff','#4ac8ff','#ff4a90',
+  '#80ff4a','#ff904a'
+];
+
+function makeBokeh() {
+  const bg = document.getElementById('bokehBg');
+  for (let i = 0; i < 22; i++) {
+    const orb = document.createElement('div');
+    orb.className = 'bokeh-orb';
+    const size = 60 + Math.random() * 180;
+    const color = orbColors[Math.floor(Math.random() * orbColors.length)];
+    const duration = 12 + Math.random() * 20;
+    const delay = -Math.random() * duration;
+    const op = 0.04 + Math.random() * 0.09;
+    const dx = (Math.random() - 0.5) * 120 + 'px';
+    const dy = (Math.random() - 0.5) * 120 + 'px';
+    const dx2 = (Math.random() - 0.5) * 80 + 'px';
+    const dy2 = (Math.random() - 0.5) * 80 + 'px';
+    const sc = 0.8 + Math.random() * 0.5;
+
+    orb.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      background:${color};
+      --op:${op}; --dx:${dx}; --dy:${dy}; --dx2:${dx2}; --dy2:${dy2}; --sc:${sc};
+      animation-duration:${duration}s;
+      animation-delay:${delay}s;
+    `;
+    bg.appendChild(orb);
+  }
+}
+
+// ── BLOOM DRAW ─────────────────────────────────────────────────────────────
+function drawBloom(svgEl, f, size=200) {
+  svgEl.innerHTML = '';
+  svgEl.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  const cx = size/2, cy = size/2;
+  const colors = f.petalColors;
+  const sizes = f.petalSizes;
+  const n = sizes.length;
+  const angleStep = 360 / n;
+
+  // ambient glow
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',size*0.3);
+  bg.setAttribute('fill',colors[0]); bg.setAttribute('opacity','0.07');
+  svgEl.appendChild(bg);
+
+  sizes.forEach((s, i) => {
+    const angle = (i * angleStep * Math.PI) / 180;
+    const r = s * size * 0.44;
+    const ex = cx + Math.cos(angle) * r;
+    const ey = cy + Math.sin(angle) * r;
+    const perp = angle + Math.PI/2;
+    const spread = r * 0.28;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const cp1x = cx + Math.cos(perp)*spread,  cp1y = cy + Math.sin(perp)*spread;
+    const cp2x = ex + Math.cos(perp)*spread*0.5, cp2y = ey + Math.sin(perp)*spread*0.5;
+    const cp3x = ex - Math.cos(perp)*spread*0.5, cp3y = ey - Math.sin(perp)*spread*0.5;
+    const cp4x = cx - Math.cos(perp)*spread,  cp4y = cy - Math.sin(perp)*spread;
+
+    path.setAttribute('d', `M${cx} ${cy} C${cp1x} ${cp1y},${cp2x} ${cp2y},${ex} ${ey} C${cp3x} ${cp3y},${cp4x} ${cp4y},${cx} ${cy} Z`);
+    path.setAttribute('fill', colors[i % colors.length]);
+    path.setAttribute('opacity', '0.72');
+
+    // glow filter per petal via drop shadow trick
+    path.style.filter = `drop-shadow(0 0 ${size*0.05}px ${colors[i%colors.length]})`;
+    svgEl.appendChild(path);
+  });
+
+  // highlight shimmer
+  const shine = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  shine.setAttribute('cx', cx - size*0.1); shine.setAttribute('cy', cy - size*0.1);
+  shine.setAttribute('r', size*0.08);
+  shine.setAttribute('fill','white'); shine.setAttribute('opacity','0.12');
+  svgEl.appendChild(shine);
+
+  // centre
+  const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',cx); dot.setAttribute('cy',cy); dot.setAttribute('r',size*0.06);
+  dot.setAttribute('fill',colors[0]); dot.setAttribute('opacity','0.9');
+  dot.style.filter = `drop-shadow(0 0 ${size*0.04}px ${colors[0]})`;
+  svgEl.appendChild(dot);
+}
+
+// ── BUILD ORB GRID ─────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('orbGrid');
+  feelings.forEach((f, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'feeling-orb';
+    cell.style.animationDelay = (i * 0.06) + 's';
+
+    const inner = document.createElement('div');
+    inner.className = 'orb-inner';
+    inner.style.background = `radial-gradient(ellipse at 38% 30%, ${f.color}88, ${f.color}44 55%, ${f.color}22)`;
+    inner.style.setProperty('--orb-color', f.color + '66');
+    inner.style.setProperty('--orb-glow',  f.color + '33');
+    inner.style.boxShadow = `0 0 24px ${f.color}66, 0 0 50px ${f.color}33, inset 0 0 20px rgba(255,255,255,0.07)`;
+
+    // draw tiny bloom svg inside
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    drawBloom(svg, f, 100);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'orb-label';
+    lbl.textContent = f.title.split(',')[0];
+
+    const dt = document.createElement('div');
+    dt.className = 'orb-date';
+    dt.textContent = f.date;
+
+    inner.appendChild(svg);
+    inner.appendChild(lbl);
+    inner.appendChild(dt);
+    cell.appendChild(inner);
+
+    cell.addEventListener('click', () => openDetail(f));
+    grid.appendChild(cell);
+  });
+}
+
+// ── DETAIL ────────────────────────────────────────────────────────────────
+function openDetail(f) {
+  document.getElementById('dTitle').textContent = f.title;
+  document.getElementById('dDate').textContent = f.date;
+  document.getElementById('dNote').textContent = '"' + f.note + '"';
+
+  const svg = document.getElementById('detailSvg');
+  drawBloom(svg, f, 200);
+
+  document.getElementById('bloomGlowBg').style.background = f.color;
+
+  // tags
+  const tagsEl = document.getElementById('dTags');
+  tagsEl.innerHTML = '';
+  f.tags.forEach(t => {
+    const chip = document.createElement('div');
+    chip.className = 'tag-chip';
+    chip.textContent = t;
+    chip.style.borderColor = f.color + '40';
+    chip.style.color = f.color + 'cc';
+    tagsEl.appendChild(chip);
+  });
+
+  // bars
+  const barsEl = document.getElementById('dBars');
+  barsEl.innerHTML = '';
+  f.sensors.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'sbar';
+    row.innerHTML = `
+      <div class="sbar-name">${s.name}</div>
+      <div class="sbar-track"><div class="sbar-fill" style="width:0%;background:${s.color};--bar-color:${s.color}" data-pct="${s.pct}"></div></div>
+      <div class="sbar-num">${s.val}${s.unit}</div>
+    `;
+    barsEl.appendChild(row);
+  });
+
+  const btn = document.getElementById('reconstructBtn');
+  btn.classList.remove('glowing');
+  btn.innerHTML = '<span>◎</span> Reconstruct this Feeling';
+
+  showScreen('detail');
+
+  setTimeout(() => {
+    document.querySelectorAll('.sbar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 300);
+}
+
+document.getElementById('detailBack').addEventListener('click', () => showScreen('home'));
+
+document.getElementById('reconstructBtn').addEventListener('click', function() {
+  this.classList.add('glowing');
+  this.innerHTML = '<span>◎</span> Reconstruction underway — breathe';
+});
+
+// ── CAPTURE DEMO ──────────────────────────────────────────────────────────
+let captureTimer = null;
+const captureBigBtn = document.getElementById('captureBigBtn');
+const homeCapture = document.getElementById('homeCapture');
+
+function startCapture() {
+  // animate sensor values
+  const vals = [
+    { id:'cs-sound',  v:'48 dB' },
+    { id:'cs-light',  v:'72%' },
+    { id:'cs-motion', v:'66 bpm' },
+    { id:'cs-temp',   v:'71°F' },
+    { id:'cs-scent',  v:'warm' },
+    { id:'cs-loc',    v:'Home' },
+  ];
+  vals.forEach((v, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(v.id);
+      if (el) {
+        el.querySelector('.cs-val').textContent = v.v;
+        el.classList.add('cs-recording');
+      }
+    }, i * 250);
+  });
+
+  captureTimer = setTimeout(() => {
+    captureBigBtn.textContent = '✓';
+    setTimeout(() => { captureBigBtn.textContent = '◎'; resetCaptureSensors(); }, 1800);
+  }, 1800);
+}
+
+function resetCaptureSensors() {
+  document.querySelectorAll('.capture-sensor-dot').forEach(el => {
+    el.classList.remove('cs-recording');
+    el.querySelector('.cs-val').textContent = '—';
+  });
+}
+
+captureBigBtn.addEventListener('click', startCapture);
+homeCapture.addEventListener('click', () => {
+  homeCapture.classList.add('pulse');
+  setTimeout(() => homeCapture.classList.remove('pulse'), 600);
+  showScreen('capture');
+});
+
+// ── INSIGHTS MINIS ────────────────────────────────────────────────────────
+function buildInsightMinis() {
+  const row = document.getElementById('insightMinis');
+  [0,5,3,1,6].forEach(idx => {
+    const f = feelings[idx];
+    const orb = document.createElement('div');
+    orb.className = 'mini-orb';
+    orb.style.background = `radial-gradient(ellipse at 38% 30%, ${f.color}88, ${f.color}33)`;
+    orb.style.setProperty('--morb-color', f.color + '55');
+    orb.style.boxShadow = `0 0 14px ${f.color}55`;
+    orb.textContent = f.emoji;
+    orb.addEventListener('click', () => openDetail(f));
+    row.appendChild(orb);
+  });
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.screen === name);
+  });
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => showScreen(item.dataset.screen));
+});
+
+// ── CLOCK ─────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  document.querySelectorAll('[id^=clock]').forEach(el => el.textContent = t);
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ── EMOTION CHART ─────────────────────────────────────────────────────────
+function buildEmotionChart() {
+  const svg = document.getElementById('emotionChart');
+  const tooltip = document.getElementById('chartTooltip');
+  const labelsEl = document.getElementById('chartXLabels');
+  if (!svg) return;
+
+  const W = 340, H = 110, padL = 4, padR = 4, padT = 10, padB = 10;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // 30 days of data — 3 emotion lines
+  const labels = ['Mar 8','Mar 13','Mar 18','Mar 23','Mar 28','Today'];
+  const points = 30;
+
+  const calm     = [62,58,70,65,55,72,68,74,60,58,80,75,70,65,60,55,68,72,78,74,70,65,60,72,76,80,74,70,68,72];
+  const joy      = [40,45,38,55,60,52,48,65,70,58,42,50,62,68,55,45,50,58,65,72,68,60,55,62,70,75,68,62,58,65];
+  const nostalgia= [30,35,40,32,28,45,50,38,42,55,60,48,35,30,45,52,58,42,38,32,45,55,62,48,40,35,50,58,65,55];
+
+  const allSeries = [
+    { data: calm,      color: '#c084fc', label: 'Calm' },
+    { data: joy,       color: '#f472b6', label: 'Joy' },
+    { data: nostalgia, color: '#60a5fa', label: 'Nostalgia' },
+  ];
+
+  function toX(i) { return padL + (i / (points - 1)) * innerW; }
+  function toY(v) { return padT + innerH - ((v / 100) * innerH); }
+
+  function smoothPath(data) {
+    let d = `M ${toX(0)} ${toY(data[0])}`;
+    for (let i = 1; i < data.length; i++) {
+      const cpx = (toX(i-1) + toX(i)) / 2;
+      d += ` C ${cpx} ${toY(data[i-1])}, ${cpx} ${toY(data[i])}, ${toX(i)} ${toY(data[i])}`;
+    }
+    return d;
+  }
+
+  // grid lines
+  [25,50,75].forEach(v => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+    line.setAttribute('y1', toY(v)); line.setAttribute('y2', toY(v));
+    line.setAttribute('stroke', 'rgba(255,255,255,0.05)');
+    line.setAttribute('stroke-width','1');
+    svg.appendChild(line);
+  });
+
+  // draw each series — filled area + line
+  allSeries.forEach(series => {
+    const pathStr = smoothPath(series.data);
+
+    // filled area
+    const firstX = toX(0), firstY = toY(series.data[0]);
+    const lastX = toX(points-1), lastY = toY(series.data[points-1]);
+    const areaPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+    areaPath.setAttribute('d', pathStr + ` L ${lastX} ${H - padB} L ${firstX} ${H - padB} Z`);
+    areaPath.setAttribute('fill', series.color);
+    areaPath.setAttribute('opacity', '0.07');
+    svg.appendChild(areaPath);
+
+    // line
+    const linePath = document.createElementNS('http://www.w3.org/2000/svg','path');
+    linePath.setAttribute('d', pathStr);
+    linePath.setAttribute('fill','none');
+    linePath.setAttribute('stroke', series.color);
+    linePath.setAttribute('stroke-width','1.8');
+    linePath.setAttribute('opacity','0.85');
+    linePath.style.filter = `drop-shadow(0 0 4px ${series.color})`;
+
+    // animate draw
+    const len = linePath.getTotalLength ? linePath.getTotalLength() : 800;
+    linePath.style.strokeDasharray = len;
+    linePath.style.strokeDashoffset = len;
+    linePath.style.transition = 'stroke-dashoffset 1.4s ease 0.3s';
+    svg.appendChild(linePath);
+    setTimeout(() => { linePath.style.strokeDashoffset = '0'; }, 100);
+  });
+
+  // hover dots + interaction
+  const hitAreas = [];
+  for (let i = 0; i < points; i++) {
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hit.setAttribute('x', toX(i) - innerW/(points*2));
+    hit.setAttribute('y', 0);
+    hit.setAttribute('width', innerW/points);
+    hit.setAttribute('height', H);
+    hit.setAttribute('fill','transparent');
+    hit.style.cursor = 'crosshair';
+
+    hit.addEventListener('mouseenter', (e) => {
+      tooltip.classList.add('show');
+      const day = `Day ${i+1}`;
+      tooltip.innerHTML = `<span style="color:#c084fc">${calm[i]}</span> · <span style="color:#f472b6">${joy[i]}</span> · <span style="color:#60a5fa">${nostalgia[i]}</span>`;
+    });
+    hit.addEventListener('mousemove', (e) => {
+      const rect = svg.closest('.chart-wrap').getBoundingClientRect();
+      let tx = e.clientX - rect.left + 8;
+      let ty = e.clientY - rect.top - 36;
+      if (tx > rect.width - 120) tx -= 120;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = ty + 'px';
+    });
+    hit.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+
+    // touch support
+    hit.addEventListener('touchstart', (e) => {
+      tooltip.classList.add('show');
+      tooltip.innerHTML = `<span style="color:#c084fc">${calm[i]}</span> · <span style="color:#f472b6">${joy[i]}</span> · <span style="color:#60a5fa">${nostalgia[i]}</span>`;
+      const t = e.touches[0];
+      const rect = svg.closest('.chart-wrap').getBoundingClientRect();
+      tooltip.style.left = (t.clientX - rect.left - 40) + 'px';
+      tooltip.style.top = '0px';
+      setTimeout(() => tooltip.classList.remove('show'), 2000);
+    }, { passive: true });
+
+    svg.appendChild(hit);
+  }
+
+  // today dot highlight on each line
+  allSeries.forEach(series => {
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', toX(points-1));
+    dot.setAttribute('cy', toY(series.data[points-1]));
+    dot.setAttribute('r','4');
+    dot.setAttribute('fill', series.color);
+    dot.style.filter = `drop-shadow(0 0 6px ${series.color})`;
+    svg.appendChild(dot);
+  });
+
+  // x labels (every 6th day → roughly 5 labels)
+  const labelIndices = [0,6,12,18,24,29];
+  labelsEl.innerHTML = '';
+  labelIndices.forEach((idx, li) => {
+    const span = document.createElement('span');
+    span.className = 'chart-x-label';
+    span.textContent = labels[li] || '';
+    labelsEl.appendChild(span);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+makeBokeh();
+buildGrid();
+buildInsightMinis();
+buildEmotionChart();
+
+// rebuild chart when switching to insights to trigger draw animation
+const origShowScreen = showScreen;
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (item.dataset.screen === 'insights') {
+      setTimeout(buildEmotionChart, 200);
+    }
+  });
+});
+</script>
+</body>
+</html>
